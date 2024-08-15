@@ -1,18 +1,24 @@
 // Now turn this trash into treasure!
 #include <TM1637.h>
+#include <DHT.h>
 
 TM1637 TM;
 
-const int BAR_0 = 14;
-const int BAR_1 = 13;
-const int BAR_2 = 12;
-const int BAR_3 = 11;
-const int BAR_4 = 10;
-const int BAR_5 = 9;
-const int BAR_6 = 8;
-const int BAR_7 = 7;
-const int BAR_8 = 6;
-const int BAR_9 = 5;
+#define BAR_0 14
+#define BAR_1 13
+#define BAR_2 12
+#define BAR_3 11
+#define BAR_4 10
+#define BAR_5 9
+#define BAR_6 8
+#define BAR_7 7
+#define BAR_8 6
+#define BAR_9 5
+
+#define DHT_PIN 15
+#define DHTTYPE DHT22
+
+DHT dht(DHT_PIN, DHTTYPE);
 
 const int BARS[10] = {
   BAR_0,
@@ -34,14 +40,27 @@ void setup() {
 
 
   for (int pin : BARS) {
-    pinMode(pin, HIGH);
+    pinMode(pin, OUTPUT);
   }
+  dht.begin();
 }
 void loop() {
+  float hum = dht.readHumidity();
+  float temp = dht.readTemperature();
+
+  if (isnan(hum) || isnan(temp)) {
+    return;
+  }
+
+  int hum_bars = map(hum, 0, 100, 0, 10);
+  
   for (int pin : BARS) {
-    TM.displayCelsius(pin);
-    digitalWrite(pin, HIGH);
-    delay(500);
     digitalWrite(pin, LOW);
   }
+  for (int i = 0; i<hum_bars; i++) {
+    digitalWrite(BARS[9-i], HIGH);
+  }
+
+  TM.displayCelsius(temp, (temp < -9) || (temp > 99));
+  delay(2000);
 }
